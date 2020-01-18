@@ -3,4 +3,4 @@
 //MOOS version and the current git commit hash
 
 #define MOOS_GIT_VERSION "@MOOS_GIT_VERSION@"
-#define MOOS_VERSION_NUMBER "@PACKAGE_VERSION@"
+#define MOOS_VERSION_NUMBER "@PROJECT_VERSION@"

@@ -1,0 +1,65 @@
+name: MOOSCore CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache Build
+      id: cache-build
+      uses: actions/cache@v1
+      with:
+        path: build
+        key: ${{ runner.os }}-0.1
+    - name: cmake
+      if: steps.cache-build.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: make
+      run: cd build && make
+    - name: package
+      run: |
+        cd build
+        rm -rf artifacts && mkdir artifacts
+        cpack -G DEB -D CPACK_OUTPUT_FILE_PREFIX=artifacts
+        dpkg -I artifacts/*.deb
+        dpkg --contents artifacts/*.deb
+    - uses: actions/upload-artifact@v1
+      with:
+        name: deb
+        path: build/artifacts
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download deb from build
+      uses: actions/download-artifact@v1
+      with:
+        name: deb
+    - name: Get File Name
+      id: get_filename
+      run: echo "::set-output name=filename::`ls deb/*.deb`"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.sha }}
+        release_name: Release ${{ github.sha }}
+        draft: true
+        prerelease: true
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.get_filename.outputs.filename }}
+        asset_name: ${{ steps.get_filename.outputs.filename }}
+        asset_content_type: application/vnd.debian.binary-package

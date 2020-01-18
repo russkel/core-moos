@@ -1,10 +1,11 @@
-
 ###########################################################
 #   Top level CMakeLists.txt file for the core-moos Project
 #   pnewman@robots.ox.ac.uk
 ###########################################################
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10.2)
+project(MOOS VERSION 10.5.0)
+set(CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/russkel/core-moos")
 
 # Libraries linked via full path no longer produce linker search paths.
 cmake_policy(SET CMP0003 NEW)
@@ -14,12 +15,7 @@ if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW)
 endif()
 
-set(PACKAGE_VERSION_MAJOR 10)
-set(PACKAGE_VERSION_MINOR 5)
-set(PACKAGE_VERSION_PATCH 0)
-
-set(PACKAGE_VERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}.${PACKAGE_VERSION_PATCH}")
-message(STATUS "+++  This is MOOS version ${PACKAGE_VERSION} +++")
+message(STATUS "+++  This is MOOS version ${PROJECT_VERSION} +++")
 
 # If user specifies the build type, use theirs, otherwise use Release
 if(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -65,8 +61,6 @@ if(BUILD_SHARED_LIBS)
         set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
     endif()
 endif()
-
-project(MOOS)
 
 set(CMakeScripts_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_MODULE_PATH ${CMakeScripts_MODULE_DIR})
@@ -209,7 +203,7 @@ configure_file(
 include(CMakePackageConfigHelpers)
 set(VERSION_FILE "${PROJECT_BINARY_DIR}/MOOSConfigVersion.cmake")
 write_basic_package_version_file("${VERSION_FILE}"
-  VERSION ${PACKAGE_VERSION}
+  VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
 
@@ -258,3 +252,15 @@ endif()
 
 include(UninstallTarget)
 configure_uninstall_target(${CMAKE_CURRENT_BINARY_DIR}/Uninstall.cmake)
+
+
+execute_process(COMMAND lsb_release -cs
+    OUTPUT_VARIABLE RELEASE_CODENAME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(CPACK_PACKAGE_CONTACT "russ@rw.id.au")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_SYSTEM_NAME "${RELEASE_CODENAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+include(CPack)
